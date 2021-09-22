@@ -11,6 +11,7 @@ dotenv.config()
 
 // Create express app
 var app = express()
+
 // Tell express to accept json (fix issue when passing password on post request)
 app.use(express.json())
 
@@ -60,8 +61,13 @@ app.get('/users', function (req, res) {
   res.status(200).json(rows)
 })
 */
-app.listen(8080)
+
+app.get('/', function (req, res) {
+  res.status(200).json({message: 'Hello'})
+})
 
 process.on('exit', function () {
   db.close()
 })
+
+module.exports = app;

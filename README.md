@@ -27,12 +27,20 @@ npm i cookie-parser
 npm i dotenv
 # Run for dev mode
 npm i nodemon --save-dev
+# For testing
+npm i -D jest supertest
 ```
 
 ## Run
 ```bash
 npm run dev
 ```
+
+## Test
+```bash
+npm test
+```
+
 
 Register a user:
 
