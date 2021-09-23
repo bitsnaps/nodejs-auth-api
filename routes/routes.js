@@ -59,7 +59,7 @@ router.get('/user', function (req, res) {
     const cookie = req.cookies['jwt']
     const claims = jwt.verify(cookie, process.env.TOKEN_SECRET)
     if (!claims){
-      res.status(401).json({ messsage: 'Unauthenticated'})
+      res.status(401).send('Unauthenticated')
     } else {
       db.get('SELECT rowid, * FROM users WHERE rowid = ?',
       [claims._id], function (err, user) {
@@ -77,7 +77,7 @@ router.get('/user', function (req, res) {
       })
     }
   } catch (e) {
-    res.status(401).json({ messsage: 'Unauthenticated'})
+    res.status(401).send('Unauthenticated')
   }
 
 })

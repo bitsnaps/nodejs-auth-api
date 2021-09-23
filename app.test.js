@@ -4,7 +4,6 @@ const app = require('./app')
 
 describe('Rest API should allow to register, login and logout users', () => {
 
-
   let user = {
     name: 'a',
     email: 'a@a.a',
@@ -23,28 +22,35 @@ describe('Rest API should allow to register, login and logout users', () => {
     const response = await request(app).post('/api/register').send(user)
     expect(response.statusCode).toBe(200)
     expect(response.body._id).toBeDefined()
+    // because it shouldn't have a password
     expect(response.body).not.toMatchObject(user)
     expect(response.body.name).toEqual(user.name)
     expect(response.body.email).toEqual(user.email)
   })
 
   test('Should login with registered user', async () => {
-    const response = await request(app).post('/api/login').send({
+    const response = await request(app).post('/api/login')
+      .set('Cookie', 'my-jwt-token')
+      .set('Content-Type', 'application/json')
+      .send({
       email: user.email,
       password: user.password
     })
+    expect(response.header['set-cookie'][0]).toMatch(/jwt=/)
     expect(response.body.message).toEqual('success')
   })
 
-  test('Should be able to authenticate with a loggedin user', async () => {
+  test('Should not be able to authenticate with a wrong token', async () => {
 
     let token = 'my-jwt-token'
 
-    const response = await request(app).post('/api/user')
-      .set('Cookie', token)
+    const response = await request(app).get('/api/user')
+      .set('Cookie', `jwt=${token};`)
+      .set('Content-Type', 'application/json')
       .send({})
-    // It should equals 'Unauthenticated'
-    expect(response.body).not.toEqual('Unauthenticated')
+
+    expect(response.statusCode).toEqual(401)
+    expect(response.text).toEqual('Unauthenticated')
   })
 
 })
