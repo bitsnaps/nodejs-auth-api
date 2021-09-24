@@ -1,5 +1,7 @@
 # JWT Authentication API using Node and express
 
+A simple Auth-API using NodeJS and express framework, with onlyHttp and cookie client validation.
+
 ## Create the project
 
 How the project was created:
