@@ -33,6 +33,12 @@ npm i nodemon --save-dev
 npm i -D jest supertest
 ```
 
+## Environment variable
+You must create the `.env` file to store your secret key:
+```bash
+TOKEN_SECRET=your_secret_key
+```
+
 ## Run
 ```bash
 npm run dev
