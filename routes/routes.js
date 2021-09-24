@@ -1,7 +1,7 @@
 const router = require('express').Router()
 const db = require('../config/db')
-const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
+const { generateAccessToken, verifyToken } = require('../helpers/auth')
 
 // Register a new user
 router.post('/register', async function (req, res) {
@@ -57,7 +57,7 @@ router.post('/login', function (req, res) {
 router.get('/user', function (req, res) {
   try {
     const cookie = req.cookies['jwt']
-    const claims = jwt.verify(cookie, process.env.TOKEN_SECRET)
+    const claims = verifyToken(cookie)
     if (!claims){
       res.status(401).send('Unauthenticated')
     } else {
@@ -77,19 +77,17 @@ router.get('/user', function (req, res) {
       })
     }
   } catch (e) {
-    res.status(401).send('Unauthenticated')
+    res.status(401).send({ message: 'Unauthenticated' })
   }
 
 })
 
 router.post('/logout', function (req, res) {
   res.cookie('jwt', '', {maxAge: 0})
-  res.json({ message: 'success'})
+  res.send({ message: 'success' })
 })
 
-function generateAccessToken(payload) {
-  return jwt.sign(payload, process.env.TOKEN_SECRET, { expiresIn: '3600s' }); // expires in 1h
-}
+
 
 /*/ Get user by id
 router.get('/user/:id', function (req, res) {
