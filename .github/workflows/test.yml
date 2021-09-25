@@ -23,4 +23,4 @@ jobs:
       - name: Create env file
         run: echo 'TOKEN_SECRET="ef822fd62938e92155fe87ef65220960c31d519f71d1b78e63f89090adde1b12caf370a1b03ee589b216ff4914d6f2a3fe5f9c84425c7b860b56e396c7292edc"' > .env
       - run: npm install
-      - run: npm test
+      - run: CI= true npm test
