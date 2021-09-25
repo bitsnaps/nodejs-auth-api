@@ -66,8 +66,13 @@ app.get('/', function (req, res) {
   res.status(200).json({message: 'Hello'})
 })
 
-process.on('exit', function () {
+app.closeDb = function () {
   db.close()
+}
+
+process.on('exit', function () {
+  app.closeDb()
 })
+
 
 module.exports = app;

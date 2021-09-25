@@ -29,6 +29,12 @@ describe('Rest API should allow to register, login and logout users', () => {
     fakeToken = generateAccessToken({ _id: fakeUser.rowid})
   })
 
+  afterAll( (done) => {
+    // Allows Jest to exit successfully.
+    app.closeDb()
+    done()
+  })
+
   test('Route to home should return Hello', async () => {
     const response = await request(app).get('/').send({})
     expect(response.statusCode).toBe(200)
