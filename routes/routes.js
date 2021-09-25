@@ -1,12 +1,15 @@
 const router = require('express').Router()
 const db = require('../config/db')
-const bcrypt = require('bcryptjs')
-const { generateAccessToken, verifyToken } = require('../helpers/auth')
+const {
+  generateAccessToken,
+  verifyToken,
+  passwordEncrypt,
+  passwordCompare
+} = require('../helpers/auth')
 
 // Register a new user
 router.post('/register', async function (req, res) {
-  const salt = await bcrypt.genSalt(10)
-  const hashedPassword = await bcrypt.hash(req.body.password, salt)
+  const hashedPassword = await passwordEncrypt(req.body.password)
   const user = {
     name: req.body.name,
     email: req.body.email,
@@ -34,10 +37,10 @@ router.post('/login', function (req, res) {
     } else if ( typeof(user) == 'undefined') {
       res.status(404).json({error: 'User not found.'})
     } else {
-      const passwordCheck = await bcrypt.compare(req.body.password, user.password)
+      const passwordCheck = await passwordCompare(req.body.password, user.password)
       if (passwordCheck){
-        // const secret = require('crypto').randomBytes(64).toString('hex');
-        // console.log(secret);
+        // const secret = generateSecretToken()
+        // console.log('secret: ', secret);
         const token = generateAccessToken({ _id: user.rowid})
         res.cookie('jwt', token, {
           httpOnly: true,
