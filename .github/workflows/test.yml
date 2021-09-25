@@ -16,6 +16,11 @@ jobs:
         node: [ '12', '14', '16' ]
     name: Node ${{ matrix.node }} sample
     steps:
+      - name: Create env file
+        run: |
+          cat << EOF >> .env
+          TOKEN_SECRET="ef822fd62938e92155fe87ef65220960c31d519f71d1b78e63f89090adde1b12caf370a1b03ee589b216ff4914d6f2a3fe5f9c84425c7b860b56e396c7292edc"
+          EOF
       - uses: actions/checkout@v2
       - name: Setup node
         uses: actions/setup-node@v2
