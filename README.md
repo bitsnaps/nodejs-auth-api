@@ -1,5 +1,8 @@
 # JWT Authentication API using Node and express
 
+![test workflow](https://github.com/bitsnaps/nodejs-auth-api/actions/workflows/test.yml/badge.svg)
+
+
 A simple Auth-API using NodeJS and express framework, with onlyHttp and cookie client validation.
 
 ## Create the project
