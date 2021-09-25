@@ -8,13 +8,12 @@ on:
     branches: [ master ]
     types: [opened]
 
+env:
+ CI: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [ '12', '14', '16' ]
-    name: Node ${{ matrix.node }} sample
     steps:
       - name: Create env file
         run: |
@@ -25,6 +24,6 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node }}
+          node-version: '14.x'
       - run: npm install
       - run: npm test
