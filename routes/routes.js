@@ -35,7 +35,7 @@ router.post('/login', function (req, res) {
     if (err){
       res.status(404).json({error: err})
     } else if ( typeof(user) == 'undefined') {
-      res.status(404).json({error: 'User not found.'})
+      res.status(404).send({error: 'User not found'})
     } else {
       const passwordCheck = await passwordCompare(req.body.password, user.password)
       if (passwordCheck){
@@ -50,7 +50,7 @@ router.post('/login', function (req, res) {
         // res.json({ 'token': token,  '_id': user.rowid, name: user.name, email: user.email })
         res.json({ message: 'success' })
       } else {
-        res.status(400).json({ error: 'Invalid credentials'})
+        res.status(400).send({ error: 'Invalid credentials'})
       }
     }
   })

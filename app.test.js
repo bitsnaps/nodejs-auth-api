@@ -5,6 +5,7 @@ const { generateAccessToken, verifyToken } = require('./helpers/auth')
 
 describe('Rest API should allow to register, login and logout users', () => {
 
+  // This user will be registered (at: /api/register)
   let user = {
     rowid: 1,
     name: 'a',
@@ -12,10 +13,20 @@ describe('Rest API should allow to register, login and logout users', () => {
     password: 'a'
   }
 
+  // This fakeUser won't be registered
+  let fakeUser = {
+    rowid: 2,
+    name: 'b',
+    email: 'b@a.a',
+    password: 'b'
+  }
+
   let token
+  let fakeToken
 
   beforeEach( () => {
     token = generateAccessToken({ _id: user.rowid})
+    fakeToken = generateAccessToken({ _id: fakeUser.rowid})
   })
 
   test('Route to home should return Hello', async () => {
@@ -83,6 +94,31 @@ describe('Rest API should allow to register, login and logout users', () => {
             expect(res.body.message).toEqual('Unauthenticated')
           })
     })
+  })
+
+  test('Should not be able to login with unregistered user', async () => {
+
+    const response = await request(app).post('/api/login')
+      .set('Cookie', fakeToken)
+      .set('Content-Type', 'application/json')
+      .send({
+        email: fakeUser.email,
+        password: fakeUser.password
+      })
+
+    expect(response.header['set-cookie']).toBeUndefined()
+    expect(response.body.error).toEqual('User not found')
+  })
+
+  test('Should not be able to get info for unregistered user', async () => {
+
+    const response = await request(app).get('/api/user')
+      .set('Cookie', `jwt=${fakeToken}`)
+      .set('Content-Type', 'application/json')
+      .send({})
+
+    expect(response.statusCode).toEqual(404)
+    expect(response.body.error).toEqual('User not found')
   })
 
 })
