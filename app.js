@@ -21,6 +21,7 @@ app.use(cors({
   // allowed frontend
   origin: [
     'http://localhost:3000',
+    'http://localhost:5000',
     'http://localhost:8080'
   ]
 }))

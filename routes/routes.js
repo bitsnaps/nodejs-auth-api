@@ -18,7 +18,7 @@ router.post('/register', async function (req, res) {
   var stmt = db.prepare('INSERT INTO users VALUES (?, ?, ?)')
   stmt.run( user.name, user.email, user.password )
   stmt.finalize( () => {
-    db.each('SELECT rowid as _id, name, email FROM users ORDER BY rowid DESC LIMIT 1', function (err, row) {
+    db.each('SELECT rowid as id, name, email FROM users ORDER BY rowid DESC LIMIT 1', function (err, row) {
       if (err){
         res.status(404).json({error: err})
       } else {
@@ -41,13 +41,13 @@ router.post('/login', function (req, res) {
       if (passwordCheck){
         // const secret = generateSecretToken()
         // console.log('secret: ', secret);
-        const token = generateAccessToken({ _id: user.rowid})
+        const token = generateAccessToken({ id: user.rowid})
         res.cookie('jwt', token, {
           httpOnly: true,
           maxAge: 24 * 60 * 60 * 1000 // 1 day
         })
         // Use this if you want to send back the JWT token
-        // res.json({ 'token': token,  '_id': user.rowid, name: user.name, email: user.email })
+        // res.json({ 'token': token,  'id': user.rowid, name: user.name, email: user.email })
         res.json({ message: 'success' })
       } else {
         res.status(400).send({ error: 'Invalid credentials'})
@@ -65,14 +65,14 @@ router.get('/user', function (req, res) {
       res.status(401).send('Unauthenticated')
     } else {
       db.get('SELECT rowid, * FROM users WHERE rowid = ?',
-      [claims._id], function (err, user) {
+      [claims.id], function (err, user) {
         if (err){
           res.status(404).json({error: err})
         } else if (typeof(user) == 'undefined') {
           res.status(404).json({error: 'User not found'})
         } else {
-          res.json({
-            _id: user.rowid,
+          res.status(200).json({
+            id: user.rowid,
             name: user.name,
             email: user.email
           })

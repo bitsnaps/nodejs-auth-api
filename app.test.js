@@ -7,7 +7,7 @@ describe('Rest API should allow to register, login and logout users', () => {
 
   // This user will be registered (at: /api/register)
   let user = {
-    rowid: 1,
+    id: 1,
     name: 'a',
     email: 'a@a.a',
     password: 'a'
@@ -15,7 +15,7 @@ describe('Rest API should allow to register, login and logout users', () => {
 
   // This fakeUser won't be registered
   let fakeUser = {
-    rowid: 2,
+    id: 2,
     name: 'b',
     email: 'b@a.a',
     password: 'b'
@@ -25,8 +25,8 @@ describe('Rest API should allow to register, login and logout users', () => {
   let fakeToken
 
   beforeEach( () => {
-    token = generateAccessToken({ _id: user.rowid})
-    fakeToken = generateAccessToken({ _id: fakeUser.rowid})
+    token = generateAccessToken({ id: user.id})
+    fakeToken = generateAccessToken({ id: fakeUser.id})
   })
 
   afterAll( (done) => {
@@ -46,7 +46,7 @@ describe('Rest API should allow to register, login and logout users', () => {
   test('Should register a user with a name, email and password', async () => {
     const response = await request(app).post('/api/register').send(user)
     expect(response.statusCode).toBe(200)
-    expect(response.body._id).toBeDefined()
+    expect(response.body.id).toBeDefined()
     // because it shouldn't have a password
     expect(response.body).not.toMatchObject(user)
     expect(response.body.name).toEqual(user.name)
