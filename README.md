@@ -24,6 +24,8 @@ npm i sqlite3
 npm i bcryptjs
 # Used to generate user Authentication token
 npm i jsonwebtoken
+# Used middleware for global authentication
+npm i express-jwt
 # Allows request from different port and sending credentials
 npm i cors
 # Parse cookie to verify token
@@ -52,12 +54,11 @@ npm run dev
 npm test
 ```
 
-
 Register a user:
 
 ```bash
 curl -X POST \
-  http://localhost:8080/api/register \
+  http://localhost:3001/api/register \
   -H 'content-type: application/json' \
   -d '{
 	"name": "a",
@@ -65,24 +66,81 @@ curl -X POST \
 	"password": "a"
 }'
 ```
+Returns:
+```
+{
+    "id": 1,
+    "name": "a",
+    "email": "a@a.a"
+}
+```
 
 Login with email:
 ```bash
 curl -X POST \
-  http://localhost:8080/api/login \
+  http://localhost:3001/api/login \
   -H 'content-type: application/json' \
   -d '{
 	"email":"a@a.a",
 	"password":"a"
 }'
 ```
+Returns:
+```
+{
+    "token": {
+        "accessToken": "...",
+        "refreshToken": ...
+    }
+}
+```
+
+Refresh token:
+```bash
+curl -X POST \
+  http://localhost:3001/api/refresh \
+  -H 'content-type: application/json' \
+  -d '{
+	"refreshToken": 531137316942949
+}'
+```
+Returns:
+```
+{
+    "token": {
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYSIsIm5hbWUiOiJVc2VyIGEiLCJpYXQiOjE2MzI3NDIwMjAsImV4cCI6MTYzMjc0MjA4MH0.jfg3psYKx8FC6ZIKTbVs-oh0piJKtrzfF-HjfCa69dM",
+        "refreshToken": 289241271081889
+    }
+}
+```
 
 Get authenticated user info using client cookie:
 ```bash
-curl -X GET http://localhost:8080/api/user
+curl -X GET \
+  http://localhost:3001/api/user \
+  -H 'authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYSIsIm5hbWUiOiJVc2VyIGEiLCJpYXQiOjE2MzI3NDIwMjAsImV4cCI6MTYzMjc0MjA4MH0.jfg3psYKx8FC6ZIKTbVs-oh0piJKtrzfF-HjfCa69dM'
+```
+Returns:
+```
+{
+    "user": {
+        "user": "a",
+        "name": "User a",
+        "iat": 1632742020,
+        "exp": 1632742080
+    }
+}
 ```
 
-Logout (and delete cookie):
+Logout:
 ```bash
-curl -X POST http://localhost:8080/api/logout
+curl -X POST \
+  http://localhost:3001/api/logout \
+  -H 'authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYSIsIm5hbWUiOiJVc2VyIGEiLCJpYXQiOjE2MzI3NDIwMjAsImV4cCI6MTYzMjc0MjA4MH0.jfg3psYKx8FC6ZIKTbVs-oh0piJKtrzfF-HjfCa69dM'
+```
+Returns:
+```
+{
+    "status": "OK"
+}
 ```
