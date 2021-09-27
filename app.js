@@ -5,6 +5,7 @@ const db = require('./config/db')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const dotenv = require('dotenv')
+const jwt = require('express-jwt')
 
 // Get config vars
 dotenv.config()
@@ -29,6 +30,20 @@ app.use(cors({
 // Configure cookieParser
 app.use(cookieParser())
 
+
+// JWT middleware
+app.use(
+  jwt({
+    secret: process.env.TOKEN_SECRET,
+    algorithms: ['HS256']
+  }).unless({
+    path: [
+      '/api/register',
+      '/api/login',
+      '/api/refresh'
+    ]
+  })
+)
 
 // Define a prefix for all routes
 app.use('/api', routes)
@@ -63,8 +78,10 @@ app.get('/users', function (req, res) {
 })
 */
 
-app.get('/', function (req, res) {
-  res.status(200).json({message: 'Hello'})
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack) // eslint-disable-line no-console
+  res.status(401).send(err + '')
 })
 
 app.closeDb = function () {

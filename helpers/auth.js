@@ -1,10 +1,11 @@
-const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
+const jwt = require('jsonwebtoken')
+const expressJwt = require('express-jwt')
 
 const auth = {
-  generateAccessToken: function (payload) {
-    return jwt.sign(payload, process.env.TOKEN_SECRET, { expiresIn: '3600s' }) // expires in 1h
+  generateAccessToken: function (payload, expirationTime = 60) {
+    return jwt.sign(payload, process.env.TOKEN_SECRET, { expiresIn: expirationTime }) // expires in 60s
   },
   verifyToken: function (cookie) {
     return jwt.verify(cookie, process.env.TOKEN_SECRET)

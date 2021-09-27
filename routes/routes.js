@@ -7,6 +7,9 @@ const {
   passwordCompare
 } = require('../helpers/auth')
 
+// Refresh tokens
+const refreshTokens = {}
+
 // Register a new user
 router.post('/register', async function (req, res) {
   const hashedPassword = await passwordEncrypt(req.body.password)
@@ -18,20 +21,23 @@ router.post('/register', async function (req, res) {
   var stmt = db.prepare('INSERT INTO users VALUES (?, ?, ?)')
   stmt.run( user.name, user.email, user.password )
   stmt.finalize( () => {
-    db.each('SELECT rowid as id, name, email FROM users ORDER BY rowid DESC LIMIT 1', function (err, row) {
+    db.get('SELECT rowid as id, name, email FROM users WHERE email = ? LIMIT 1', [user.email], function (err, row) {
       if (err){
         res.status(404).json({error: err})
       } else {
-        res.status(200).json( row )
+        res.status(201).json( row )
       }
     })
   })
 })
 
-// Login user via email
-router.post('/login', function (req, res) {
+// Login user via email/password
+router.post('/login', (req, res) => {
+  const { email, password } = req.body
+  const refreshToken = Math.floor(Math.random() * (1000000000000000 - 1 + 1)) + 1
+
   db.get('SELECT rowid, * FROM users WHERE email = ? LIMIT 1',
-    [req.body.email], async function (err, user) {
+    [email], async function (err, user) {
     if (err){
       res.status(404).json({error: err})
     } else if ( typeof(user) == 'undefined') {
@@ -40,15 +46,31 @@ router.post('/login', function (req, res) {
       const passwordCheck = await passwordCompare(req.body.password, user.password)
       if (passwordCheck){
         // const secret = generateSecretToken()
-        // console.log('secret: ', secret);
-        const token = generateAccessToken({ id: user.rowid})
-        res.cookie('jwt', token, {
-          httpOnly: true,
-          maxAge: 24 * 60 * 60 * 1000 // 1 day
-        })
+        const username = user.name
         // Use this if you want to send back the JWT token
-        // res.json({ 'token': token,  'id': user.rowid, name: user.name, email: user.email })
-        res.json({ message: 'success' })
+        const accessToken = generateAccessToken(
+          {
+            username,
+            // picture: 'https://github.com/nuxt.png',
+            name: 'User ' + username,
+            // scope: ['test', 'user']
+          }, '2h')
+
+          refreshTokens[refreshToken] = {
+            accessToken,
+            user: {
+              username,
+              // picture: 'https://github.com/nuxt.png',
+              name: 'User ' + username
+            }
+          }
+          res.json({
+            token: {
+              accessToken,
+              refreshToken
+            }
+          })
+        // res.json({ message: 'success' })
       } else {
         res.status(400).send({ error: 'Invalid credentials'})
       }
@@ -56,54 +78,47 @@ router.post('/login', function (req, res) {
   })
 })
 
-// Get loggedin user info
-router.get('/user', function (req, res) {
-  try {
-    const cookie = req.cookies['jwt']
-    const claims = verifyToken(cookie)
-    if (!claims){
-      res.status(401).send('Unauthenticated')
-    } else {
-      db.get('SELECT rowid, * FROM users WHERE rowid = ?',
-      [claims.id], function (err, user) {
-        if (err){
-          res.status(404).json({error: err})
-        } else if (typeof(user) == 'undefined') {
-          res.status(404).json({error: 'User not found'})
-        } else {
-          res.status(200).json({
-            id: user.rowid,
-            name: user.name,
-            email: user.email
-          })
-        }
+// Refresh token
+router.post('/refresh', (req, res) => {
+  const { refreshToken } = req.body
+
+  if ((refreshToken in refreshTokens)) {
+    const user = refreshTokens[refreshToken].user
+    const expiresIn = 15
+    const newRefreshToken = Math.floor(Math.random() * (1000000000000000 - 1 + 1)) + 1
+    delete refreshTokens[refreshToken]
+    const accessToken = generateAccessToken(
+      {
+        user: user.username,
+        // picture: 'https://github.com/nuxt.png',
+        name: 'User ' + user.username,
+        // scope: ['test', 'user']
       })
+
+    refreshTokens[newRefreshToken] = {
+      accessToken,
+      user
     }
-  } catch (e) {
-    res.status(401).send({ message: 'Unauthenticated' })
+
+    res.json({
+      token: {
+        accessToken,
+        refreshToken: newRefreshToken
+      }
+    })
+  } else {
+    res.sendStatus(401)
   }
-
 })
 
+// [GET] /user: Get loggedin user info by username
+router.get('/user', (req, res) => {
+  res.json({ user: req.user })
+})
+
+// [POST] /logout
 router.post('/logout', function (req, res) {
-  res.cookie('jwt', '', {maxAge: 0})
-  res.send({ message: 'success' })
+  res.send({ status: 'OK' })
 })
-
-
-
-/*/ Get user by id
-router.get('/user/:id', function (req, res) {
-  db.get('SELECT * FROM users WHERE rowid = ?', [req.params.id], function (err, row) {
-    if (err){
-      res.status(404).json({error: err})
-    } else if ( typeof(row) == 'undefined') {
-      res.status(404).json({error: 'User not found'})
-    } else {
-      res.json(row)
-    }
-  })
-})
-*/
 
 module.exports = router;

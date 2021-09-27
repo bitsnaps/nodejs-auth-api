@@ -21,31 +21,34 @@ describe('Rest API should allow to register, login and logout users', () => {
     password: 'b'
   }
 
-  let token
+  let accessToken
   let fakeToken
+  let refreshToken
 
-  beforeEach( () => {
-    token = generateAccessToken({ id: user.id})
-    fakeToken = generateAccessToken({ id: fakeUser.id})
+  beforeAll( () => {
+    jest.spyOn(global.Math, 'random').mockReturnValue(0.123456789)
   })
 
+  beforeEach( () => {
+    const username = user.name
+    const fakeUsername = fakeUser.name
+    accessToken = generateAccessToken({ username, name: 'User ' + username }, '2h')
+    fakeToken = generateAccessToken({ fakeUsername, name: 'User ' + fakeUsername }, '2h')
+    refreshToken = Math.floor(Math.random() * (1000000000000000 - 1 + 1)) + 1
+  })
+
+
   afterAll( (done) => {
+    jest.spyOn(global.Math, 'random').mockRestore();
     // Allows Jest to exit successfully.
     app.closeDb()
     done()
   })
 
-  test('Route to home should return Hello', async () => {
-    const response = await request(app).get('/').send({})
-    expect(response.statusCode).toBe(200)
-    // console.log(response);
-    expect(response.body.message).toEqual('Hello')
-    expect(response.headers['content-type']).toEqual(expect.stringContaining('json'))
-  })
 
   test('Should register a user with a name, email and password', async () => {
     const response = await request(app).post('/api/register').send(user)
-    expect(response.statusCode).toBe(200)
+    expect(response.statusCode).toBe(201)
     expect(response.body.id).toBeDefined()
     // because it shouldn't have a password
     expect(response.body).not.toMatchObject(user)
@@ -55,76 +58,67 @@ describe('Rest API should allow to register, login and logout users', () => {
 
   test('Should login with registered user', async () => {
     const response = await request(app).post('/api/login')
-      .set('Cookie', token)
       .set('Content-Type', 'application/json')
       .send({
       email: user.email,
       password: user.password
     })
-    expect(response.header['set-cookie'][0]).toMatch(`jwt=${token}`)
-    expect(response.body.message).toEqual('success')
+    expect(response.statusCode).toEqual(200)
+    expect(response.body.token).toBeDefined()
+    expect(response.body.token.accessToken).toEqual(accessToken)
+    expect(response.body.token.refreshToken).toEqual(refreshToken)
   })
 
-  test('Should not be able to authenticate with unvalid token', async () => {
-
+  test('Should not be able to authenticate with a different token', async () => {
     const response = await request(app).get('/api/user')
-      .set('Cookie', `jwt=1234567`)
-      .set('Content-Type', 'application/json')
-      .send({})
-
-    expect(response.statusCode).toEqual(401)
-    expect(response.body.message).toEqual('Unauthenticated')
-  })
-
-  test('Should be able to authenticate with the valid token', async () => {
-    const response = await request(app).get('/api/user')
-      .set('Cookie', `jwt=${token}`)
+      .set('Authorization', `Bearer ${fakeToken}`)
       .set('Content-Type', 'application/json')
       .send({})
 
     expect(response.statusCode).toEqual(200)
-    expect(response.body).toMatchObject({email: user.email, name: user.name})
+    expect(response.body.user.fakeUsername).not.toEqual(user.name)
+  })
+
+  test('Should be able to authenticate with the valid token', async () => {
+    const response = await request(app).get('/api/user')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .set('Content-Type', 'application/json')
+      .send({})
+
+    expect(response.statusCode).toEqual(200)
+    expect(response.body.user.username).toEqual(user.name)
+    expect(response.body.user.name).toEqual(`User ${user.name}`)
   })
 
   test('Should be able to logout', async() => {
     const agent = await request(app)
     agent.post('/api/logout')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send()
       .end(function (err, res) {
-        expect(res.body.message).toEqual('success')
-        agent.get('/api/user')
-          .set('Cookie', `jwt=${token}`)
-          .set('Content-Type', 'application/json')
-          .send(function (err, res) {
-            expect(res.statusCode).toEqual(401)
-            expect(res.body.message).toEqual('Unauthenticated')
-          })
+        expect(res.body.status).toEqual('OK')
     })
   })
 
   test('Should not be able to login with unregistered user', async () => {
-
     const response = await request(app).post('/api/login')
-      .set('Cookie', fakeToken)
+      .set('Authorization', `Bearer ${fakeToken}`)
       .set('Content-Type', 'application/json')
       .send({
         email: fakeUser.email,
         password: fakeUser.password
       })
 
-    expect(response.header['set-cookie']).toBeUndefined()
+    expect(response.statusCode).toEqual(404)
     expect(response.body.error).toEqual('User not found')
   })
 
-  test('Should not be able to get info for unregistered user', async () => {
-
+  test('Should not be able to get info for another user', async () => {
     const response = await request(app).get('/api/user')
-      .set('Cookie', `jwt=${fakeToken}`)
+      .set('Authorization', `Bearer ${fakeToken}`)
       .set('Content-Type', 'application/json')
       .send({})
-
-    expect(response.statusCode).toEqual(404)
-    expect(response.body.error).toEqual('User not found')
+    expect(response.body.user.name).not.toMatch(`User ${user.name}`)
   })
 
 })
