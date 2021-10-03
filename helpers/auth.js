@@ -7,8 +7,8 @@ const auth = {
   generateAccessToken: function (payload, expirationTime = 60) {
     return jwt.sign(payload, process.env.TOKEN_SECRET, { expiresIn: expirationTime }) // expires in 60s
   },
-  verifyToken: function (cookie) {
-    return jwt.verify(cookie, process.env.TOKEN_SECRET)
+  verifyToken: function (token) {
+    return jwt.verify(token, process.env.TOKEN_SECRET)
   },
   passwordEncrypt: async function (password) {
     const salt = await bcrypt.genSalt(10)

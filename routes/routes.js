@@ -113,7 +113,14 @@ router.post('/refresh', (req, res) => {
 
 // [GET] /user: Get loggedin user info by username
 router.get('/user', (req, res) => {
-  res.json({ user: req.user })
+  const jwt = req.headers['authorization'].split('Bearer ')[1]
+  const claims = verifyToken( jwt )
+  if (claims.name === req.user.name){
+    res.json({ user: req.user })
+  } else {
+    res.status(404).send({error: 'User not found'})
+  }
+
 })
 
 // [POST] /logout
